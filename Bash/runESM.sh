@@ -8,12 +8,15 @@
 #SBATCH --nodes=1                  # Request nodes
 #SBATCH --ntasks-per-node=1        # Number of tasks per node (usually 1 per node)
 #SBATCH --partition=gpu-h200       # GPU partition
+#SBATCH --mem=128G                 # Memory {15B: 128G, 3B: 80G}
 
 
 inModelType='3B Params'
 inEnzymeName='Mpro2'
+inSubstrateLength=8
 inUseReadingFrame=true
 inMinSubs=100
+
 
 # Get inputs
 while getopts "b:r:p:l" opt; do
@@ -36,12 +39,5 @@ while getopts "b:r:p:l" opt; do
   esac
 done
 
-if [[ $inModelType == "15B Params" ]]; then
-  #SBATCH --mem=128G                  # Memory
-  echo "128 GB"
-else
-  #SBATCH --mem=80G                  # Memory
-  echo "80 GB"
-fi
-
-python ESM.py "$inModelType" "$inEnzymeName" "$AA" "$pos" "$inUseReadingFrame" "$inMinSubs" "$batchSize"
+python ESM.py "$inModelType" "$inEnzymeName" "$AA" "$pos" \
+              "$inSubstrateLength" "$inUseReadingFrame" "$inMinSubs" "$batchSize"

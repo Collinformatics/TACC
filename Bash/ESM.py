@@ -8,8 +8,9 @@ import time
 import torch
 
 
+
 # Check for input
-if len(sys.argv) < 7:
+if len(sys.argv) < 8:
     print("ERROR: Incorrect number of inputs\n"
           "Usage: python convertToJPG.py <input file>")
     sys.exit(1)
@@ -19,15 +20,16 @@ modelParams = sys.argv[1]
 enzymeName = sys.argv[2]
 fixAA = sys.argv[3]
 fixPos = sys.argv[4]
-useReadingFrame = sys.argv[5]
-minSubs = sys.argv[6]
-batchSize = sys.argv[7]
+lenSubs = int(sys.argv[5])
+useReadingFrame = sys.argv[6]
+minSubs = sys.argv[7]
+batchSize = int(sys.argv[8])
 
+# Parameters: Dataset
+labelsXAxis = [f'R{i}' for i in range(1, lenSubs+1)]
 enzyme = None
 if enzymeName.lower() == 'mpro2':
     enzyme = f'SARS-CoV-2 M{'ᵖʳᵒ'}'
-
-# Define file name
 tagFile = f'{enzyme} - {fixAA}@R{fixPos}'
 fileName = None
 if useReadingFrame:
@@ -47,15 +49,15 @@ pathEmbeddings = os.path.join('Embeddings')
 os.makedirs(pathData, exist_ok=True)
 os.makedirs(pathEmbeddings, exist_ok=True)
 
-
-pathSubs = os.path.join(pathData, fileName)
-print(f'Loading Substrates:\n'
-      f'     {pathSubs}\n\n')
-
-
-
-
-# sys.exit()
+# Load data
+def loadSubs(file):
+    print('================================= Loading Data '
+          '==================================')
+    pathSubs = os.path.join(pathData, fileName)
+    print(f'Loading Substrates:\n'
+          f'     {pathSubs}\n\n')
+    return pathSubs
+substrates = loadSubs(file=fileName)
 
 
 substrates = {
@@ -66,35 +68,34 @@ substrates = {
 
 
 
-def ESM(self, substrates, paramsESM, trainingSet=False):
+# Set device
+print('============================== Set Training Device '
+      '==============================')
+if torch.cuda.is_available():
+    device = 'cuda:0'
+    print(f'Train with Device: {device}\n'
+          f'Device Name: {torch.cuda.get_device_name(device)}'
+          f'\n\n')
+else:
+    import platform
+    device = 'cpu'
+    print(f'Train with Device: {device}\n'
+          f'Device Name: {platform.processor()}\n\n')
+
+
+
+def ESM(substrates, paramsESM, pathSave, trainingSet=False):
     print('=========================== Generate Embeddings: ESM '
           '============================')
-    # Choose: ESM PLM model
-    modelPrams = 2
-    if modelPrams == 0:
-        sizeESM = '15B Params'
-    elif modelPrams == 1:
-        sizeESM = '3B Params'
-    else:
-        sizeESM = '650M Params'
-
     # Inspect: Data type
     predictions = True
     if trainingSet:
         predictions = False
-    print(f'Dataset: {paramsESM}\n'
-          f'Total unique substrates: {len(substrates):,}')
+    print(f'ESM Model: {paramsESM}\n'
+          f'Batch Size: {batchSize}\n')
 
     # Load: ESM Embeddings
-    pathEmbeddings = os.path.join(pathEmbeddings, f'{paramsESM}.csv')
-    if os.path.exists(pathEmbeddings):
-        print(f'\nLoading: ESM Embeddings\n'
-              f'     {pathEmbeddings}\n')
-        subEmbeddings = pd.read_csv(pathEmbeddings, index_col=0)
-        print(f'Substrate Embeddings shape: '
-              f'{subEmbeddings.shape}\n\n')
-
-        return subEmbeddings
+    pathEmbeddings = os.path.join(pathSave, f'{paramsESM}.csv')
 
     # # Generate Embeddings
     # Step 1: Convert substrates to ESM model format and generate Embeddings
@@ -102,11 +103,6 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
     subs = []
     values = []
     if trainingSet:
-        # Randomize substrates
-        items = list(substrates.items())
-        random.shuffle(items)
-        substrates = dict(items)
-
         for index, (substrate, value) in enumerate(substrates.items()):
             totalSubActivity += value
             subs.append((f'Sub{index}', substrate))
@@ -115,22 +111,26 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
         for index, substrate in enumerate(substrates):
             subs.append((f'Sub{index}', substrate))
     sampleSize = len(substrates)
-    print(f'Collected substrates: {sampleSize:,}')
+    print(f'Total unique substrates: {len(substrates):,}\n'
+          f'Collected substrates: {sampleSize:,}')
     if totalSubActivity != 0:
         if isinstance(totalSubActivity, float):
-            print(f'Total Values: {round(totalSubActivity, 1):,}'
-                  f'')
-        else:
-            print(f'Total Values: {totalSubActivity:,}')
+            print(f'Total Values: {round(totalSubActivity, 1):,}')
     print()
 
     # Step 2: Load the ESM model and batch converter
     if paramsESM == '15B Params':
+        print(f'Loading Model: esm2_t48_15B_UR50D()')
         model, alphabet = esm.pretrained.esm2_t48_15B_UR50D()
         numLayersESM = 48
     else:
-        model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
-        numLayersESM = 36
+        # print(f'Loading Model: esm2_t36_3B_UR50D()')
+        # model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
+        # numLayersESM = 36
+        print(f'Loading Model: esm2_t33_650M_UR50D')
+        model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
+        numLayersESM = 33
+    print()
     model = model.to(device)
 
     # Get: batch tensor
@@ -145,11 +145,9 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
     except Exception as exc:
         print(f'ERROR: The ESM has failed to evaluate your substrates\n\n'
               f'Exception:\n{exc}\n\n'
-              f'Suggestion:'
-              f'     Try replacing: esm.pretrained.esm2_t36_3B_UR50D()'
-              f'\n'
-              f'     With: esm.pretrained.esm2_t33_650M_UR50D()'
-              f'\n')
+              f'\n\nSuggestion:'
+              f'     Try adding more memory:\n'
+              f'          #SBATCH --mem=[80G, 100G, 120G, 140G]\n\n')
         sys.exit(1)
     print(f'Batch Tokens: {batchTokens.shape}\n'
           f'{batchTokens}\n')
@@ -161,7 +159,7 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
     if totalSubActivity != 0:
         slicedTokens['Values'] = values
     print(f'\nSliced Tokens:\n'
-          f'{slicedTokens}\n')
+          f'{slicedTokens}\n\n')
 
     # Generate embeddings
     batchTotal = len(batchTokens)
@@ -221,14 +219,14 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
 
     # Process Embeddings
     subEmbeddings = pd.DataFrame(data, index=batchSubs, columns=columns)
-    print(f'Substrate Embeddings shape: '
-          f'{sequenceEmbeddings.shape}\n\n')
-    print(f'Embeddings saved at:\n'
+    print(f'\nSubstrate Embeddings:\n{subEmbeddings}\n\n')
+    print(f'Saving Embeddings At:\n'
           f'     {pathEmbeddings}\n\n')
     subEmbeddings.to_csv(pathEmbeddings)
 
 
 
 # Generate embeddings
-ESM(substrates=substrates, paramsESM=modelParams, trainingSet=True)
-ESM(substrates=substrates, paramsESM=modelParams, trainingSet=True)
+ESM(substrates=substrates, paramsESM=modelParams, pathSave=pathEmbeddings,
+    trainingSet=True)
+# ESM(substrates=substrates, paramsESM=modelParams, pathSave=pathEmbeddings)
