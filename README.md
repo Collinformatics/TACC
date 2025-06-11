@@ -21,11 +21,12 @@ Login by with the command:
 
   The following flags will allow you to switch to a secondary server, or directory
 
-  - Start in your secondary directory after logging in:
-  
-        bash loginTACC.sh -u username -e
-
   - Login to a secondary computer:
 
-        bash loginTACC.sh -u username -l
+        bash loginTACC.sh -u username -c
+
+  - Start in your secondary directory after logging in:
+  
+        bash loginTACC.sh -u username -d
+
    
