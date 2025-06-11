@@ -1,5 +1,5 @@
 #!/bin/bash
-#!/bin/bash
+
 #SBATCH --job-name=ESM
 #SBATCH --output=runESM_%j.log
 #SBATCH --error=runESM_%j.err
