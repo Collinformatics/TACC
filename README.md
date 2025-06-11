@@ -13,7 +13,7 @@ loginTACC.sh allows you to login to a TACC super computer of your choice.
 After logging in, it will move to a user defined folder in the WORK directory.
 
 
-Run the with the command: 
+Login by with the command: 
 
     bash loginTACC.sh -u yourUserName
 
