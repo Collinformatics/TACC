@@ -28,10 +28,14 @@ inMinES=0
 batchSize=512
 AA="Q"
 pos="4"
+fileNameSubsPred=false
 
 # Get inputs
-while getopts "m:s" opt; do
+while getopts "f:m:s" opt; do
   case $opt in
+    f)
+      fileNameSubsPred="$OPTARG"
+      ;;
     m)
       inMinSubs="$OPTARG"
       ;;
@@ -45,4 +49,4 @@ while getopts "m:s" opt; do
 done
 
 python ESM.py "$inModelType" "$inEnzymeName" "$AA" "$pos" "$inSubstrateLength" \
-              "$inUseReadingFrame" $inMinES "$inMinSubs" "$batchSize"
+              "$inUseReadingFrame" $inMinES "$inMinSubs" "$batchSize" "$fileNameSubsPred"
