@@ -1,6 +1,6 @@
-# Login To TACC: loginTACC.sh
+# Login To TACC: 
 
-This script allows you to login to a TACC super computer of your choice.
+loginTACC.sh allows you to login to a TACC super computer of your choice.
 
 - Define supercomputers with:
 
