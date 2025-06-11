@@ -13,9 +13,9 @@ loginTACC.sh allows you to login to a TACC super computer of your choice.
 After logging in, it will move to a user defined folder in the WORK directory.
 
 
-Command to run the script: 
+Run the with the command: 
 
-    bash loginTACC.sh -u username
+    bash loginTACC.sh -u yourUserName
 
 - Flags:
 
