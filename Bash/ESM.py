@@ -9,7 +9,7 @@ import torch
 
 
 # Check for input
-if len(sys.argv) < 6:
+if len(sys.argv) < 7:
     print("ERROR: Incorrect number of inputs\n"
           "Usage: python convertToJPG.py <input file>")
     sys.exit(1)
@@ -21,6 +21,7 @@ fixAA = sys.argv[3]
 fixPos = sys.argv[4]
 useReadingFrame = sys.argv[5]
 minSubs = sys.argv[6]
+batchSize = sys.argv[7]
 
 enzyme = None
 if enzymeName.lower() == 'mpro2':
@@ -40,9 +41,22 @@ print(f'Generate Embeddings:\n'
       f'    Enzyme: {enzymeName}\n'
       f'    Min Subs: {minSubs}\n\n')
 
+# Define: Directories
+pathData = os.path.join('Data')
+pathEmbeddings = os.path.join('Embeddings')
+os.makedirs(pathData, exist_ok=True)
+os.makedirs(pathEmbeddings, exist_ok=True)
 
+
+pathSubs = os.path.join(pathData, fileName)
 print(f'Loading Substrates:\n'
-      f'     {fileName}\n\n')
+      f'     {pathSubs}\n\n')
+
+
+
+
+# sys.exit()
+
 
 substrates = {
     'AVLQSASA': 125544,
@@ -72,7 +86,7 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
           f'Total unique substrates: {len(substrates):,}')
 
     # Load: ESM Embeddings
-    pathEmbeddings = os.path.join(self.pathEmbeddings, f'{paramsESM}.csv')
+    pathEmbeddings = os.path.join(pathEmbeddings, f'{paramsESM}.csv')
     if os.path.exists(pathEmbeddings):
         print(f'\nLoading: ESM Embeddings\n'
               f'     {pathEmbeddings}\n')
@@ -111,19 +125,13 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
     print()
 
     # Step 2: Load the ESM model and batch converter
-    if sizeESM == '15B Params':
+    if paramsESM == '15B Params':
         model, alphabet = esm.pretrained.esm2_t48_15B_UR50D()
         numLayersESM = 48
-    elif sizeESM == '3B Params':
+    else:
         model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
         numLayersESM = 36
-    else:
-        model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
-        numLayersESM = 33
-        # esm2_t36_3B_UR50D has 36 layers
-        # esm2_t33_650M_UR50D has 33 layers
-        # esm2_t12_35M_UR50D has 12 layers
-    model = model.to(self.device)
+    model = model.to(device)
 
     # Get: batch tensor
     batchConverter = alphabet.get_batch_converter()
@@ -132,7 +140,7 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
     try:
         batchLabels, batchSubs, batchTokens = batchConverter(subs)
         batchTokensCPU = batchTokens
-        batchTokens = batchTokens.to(self.device)
+        batchTokens = batchTokens.to(device)
 
     except Exception as exc:
         print(f'ERROR: The ESM has failed to evaluate your substrates\n\n'
@@ -149,7 +157,7 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
     # Record tokens
     slicedTokens = pd.DataFrame(batchTokensCPU[:, 1:-1],
                                 index=batchSubs,
-                                columns=self.labelsXAxis)
+                                columns=labelsXAxis)
     if totalSubActivity != 0:
         slicedTokens['Values'] = values
     print(f'\nSliced Tokens:\n'
@@ -162,9 +170,9 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
     startInit = time.time()
     print('Generating ESM Embeddings:')
     with torch.no_grad():
-        for i in range(0, len(batchTokens), self.batchSize):
+        for i in range(0, len(batchTokens), batchSize):
             start = time.time()
-            batch = batchTokens[i:i + self.batchSize].to(self.device)
+            batch = batchTokens[i:i + batchSize].to(device)
             result = model(batch, repr_layers=[numLayersESM], return_contacts=False)
             tokenReps = result["representations"][numLayersESM]
             seqEmbed = tokenReps[:, 0, :].cpu().numpy()
@@ -181,7 +189,7 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
                   f'     Total Time: {round(runtimeTotal, 3):,} min'
                   f'\n')
             if trainingSet:
-                allValues.extend(values[i:i + self.batchSize])
+                allValues.extend(values[i:i + batchSize])
 
             # Clear data to help free memory
             del tokenReps, batch
@@ -219,6 +227,8 @@ def ESM(self, substrates, paramsESM, trainingSet=False):
           f'     {pathEmbeddings}\n\n')
     subEmbeddings.to_csv(pathEmbeddings)
 
-    return subEmbeddings
 
-ESM(substrates=substrates, paramsESM=modelParams)
+
+# Generate embeddings
+ESM(substrates=substrates, paramsESM=modelParams, trainingSet=True)
+ESM(substrates=substrates, paramsESM=modelParams, trainingSet=True)
