@@ -23,21 +23,21 @@ inModelType='15B Params'
 inEnzymeName='Mpro2'
 inSubstrateLength=8
 inUseReadingFrame=true
-inMinSubs=100
+inMinSubs=100 # 5000, 1000, 100, 10
 inMinES=0
-batchSize=512
+batchSize=2
 AA="Q"
 pos="4"
 fileNameSubsPred=false
 
 # Get inputs
-while getopts "f:m:s" opt; do
+while getopts "m:ps" opt; do
   case $opt in
-    f)
-      fileNameSubsPred="$OPTARG"
-      ;;
     m)
       inMinSubs="$OPTARG"
+      ;;
+    p)
+      fileNameSubsPred=true
       ;;
     s)
       inModelType='3B Params'

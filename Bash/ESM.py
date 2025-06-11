@@ -18,8 +18,7 @@ useReadingFrame = sys.argv[6]
 minES = sys.argv[7]
 minSubCount = sys.argv[8]
 batchSize = int(sys.argv[9])
-pathPredSubs = sys.argv[10]
-
+loadPredSubs = sys.argv[10].lower() == 'true'
 
 # Parameters: Dataset
 labelsXAxis = [f'R{i}' for i in range(1, lenSubs+1)]
@@ -34,12 +33,28 @@ if useReadingFrame:
 else:
     datasetTag = f'Filtered {tagFile}'
     fileName = f'fixedSubs - {enzyme} - {tagFile} - FinalSort - MinCounts {minSubCount}'
-if pathPredSubs == 'false':
-    pathPredSubs = False if pathPredSubs.lower() == 'false' else pathPredSubs
+if loadPredSubs == 'true':
+    loadPredSubs = False if loadPredSubs.lower() == 'false' else loadPredSubs
 print(f'Generate Embeddings:\n'
       f'    ESM: {modelParams}\n'
       f'    Enzyme: {enzymeName}\n'
       f'    Min Subs: {minSubCount}\n\n')
+
+
+# Get: Predicted substrate file name
+if loadPredSubs:
+    paths = {
+        '5000': "genSubs - SARS-CoV-2 Mᵖʳᵒ - Reading Frame Q@R4 - MinES 0 - "
+                "Added I@R1_H@R2_[R,C,G]@R6_V@R7_[S,G,M]@R8 - MinCounts 5000",
+        '1000': "genSubs - SARS-CoV-2 Mᵖʳᵒ - Reading Frame Q@R4 - MinES 0 - "
+                "Added H@R2_[R,C]@R6_V@R7_[S,M]@R8 - MinCounts 1000",
+        '100': "genSubs - SARS-CoV-2 Mᵖʳᵒ - Reading Frame Q@R4 - MinES 0 - "
+               "Added I@R1_H@R2_[R,C]@R6_V@R7_[S,M]@R8 - MinCounts 100",
+        '10': "genSubs - SARS-CoV-2 Mᵖʳᵒ - Reading Frame Q@R4 - MinES 0 - "
+              "Added I@R1_H@R2_[R,C]@R6_V@R7_[S,M]@R8 - MinCounts 10"
+    }
+    fileNamePredSubs = f'{paths[str(minSubCount)]}.txt'
+
 
 # Define: Directories
 pathData = os.path.join('Data')
@@ -211,9 +226,9 @@ def ESM(substrates, paramsESM, tagEmbeddiongs, pathSave, trainingSet=False):
 
 
 # ===================================== Run The Code =====================================
-if pathPredSubs:
+if loadPredSubs:
     # Load: Substrates
-    subsPred, subsPredN = loadSubs(file=pathPredSubs, tag='Prediction Data',
+    subsPred, subsPredN = loadSubs(file=fileNamePredSubs, tag='Prediction Data',
                                    loadPredictedSubs=True)
 
     # Define: File tag
