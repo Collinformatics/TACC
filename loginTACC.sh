@@ -8,14 +8,15 @@ inDirectory="ESM"
 
 
 # Get inputs
-while getopts "elu:" opt; do
+while getopts "cdu:" opt; do
   case $opt in
-    e)
-      inDirectory="EvolvePro"
-      ;;
-    l)
+    c)
       # Redefine: Computer Cluster
       inComputer="ls6"
+      ;;
+    d)
+      # Redefine: Directory
+      inDirectory="EvolvePro"
       ;;
     u)
       userName="$OPTARG"
