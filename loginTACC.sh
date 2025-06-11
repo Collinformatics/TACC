@@ -39,23 +39,23 @@ else
   ssh -l "$userName" login1.ls6.tacc.utexas.edu
 fi
 }
+login
 
 
 # Move to the working directory
 cd \$WORK &&
 cd ..
 
-# Make the directory if it doesn't exist
+
+# Make the project directory if it doesn't exist
 if [[ ! -d "$inDirectory" ]]; then
   echo "Directory '$inDirectory' does not exist. Creating it now..."
   mkdir -p "$inDirectory" || { echo "ERROR: Could not create directory"; exit 1; }
 fi
 
-
 # Move to project directory
-#cd "$inDirectory"
-dir=$(pwd)
-echo "Directory: $dir"
+# shellcheck disable=SC2164
+cd "$inDirectory"
 
 
 # Inspect: Virtual Environment
