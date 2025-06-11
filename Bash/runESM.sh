@@ -11,27 +11,32 @@
 #SBATCH --mem=128G                 # Memory {15B: 128G, 3B: 80G}
 
 
-inModelType='3B Params'
+# | **ESM Model**   | **Param** | **Common Batch Sizes** | **Notes**                                     |
+# | --------------- | --------- | ---------------------- | --------------------------------------------- |
+# | `esm2_t12_35M`  | 35M       | 64 – 512               | Light model, very fast                        |
+# | `esm2_t33_650M` | 650M      | 16 – 64                | Moderate memory use                           |
+# | `esm2_t36_3B`   | 3B        | 2 – 8                  | Needs \~20–40 GB GPU                          |
+# | `esm2_t48_15B`  | 15B       | 1 – 2                  | Needs \~80–100 GB GPU (e.g., A100 80GB, H100) |
+
+
+inModelType='15B Params'
 inEnzymeName='Mpro2'
 inSubstrateLength=8
 inUseReadingFrame=true
 inMinSubs=100
-
+inMinES=0
+batchSize=512
+AA="Q"
+pos="4"
 
 # Get inputs
-while getopts "b:r:p:l" opt; do
+while getopts "m:s" opt; do
   case $opt in
-    b)
-      batchSize=$OPTARG
+    m)
+      inMinSubs="$OPTARG"
       ;;
-    r)
-      AA=$OPTARG
-      ;;
-    p)
-      pos=$OPTARG
-      ;;
-    l)
-      inModelType='15B Params'
+    s)
+      inModelType='3B Params'
       ;;
     *)
       exit 1
@@ -39,5 +44,5 @@ while getopts "b:r:p:l" opt; do
   esac
 done
 
-python ESM.py "$inModelType" "$inEnzymeName" "$AA" "$pos" \
-              "$inSubstrateLength" "$inUseReadingFrame" "$inMinSubs" "$batchSize"
+python ESM.py "$inModelType" "$inEnzymeName" "$AA" "$pos" "$inSubstrateLength" \
+              "$inUseReadingFrame" $inMinES "$inMinSubs" "$batchSize"

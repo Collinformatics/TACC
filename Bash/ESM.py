@@ -2,6 +2,7 @@ import esm
 import numpy as np
 import os
 import pandas as pd
+import pickle as pk
 import random
 import sys
 import time
@@ -22,26 +23,29 @@ fixAA = sys.argv[3]
 fixPos = sys.argv[4]
 lenSubs = int(sys.argv[5])
 useReadingFrame = sys.argv[6]
-minSubs = sys.argv[7]
-batchSize = int(sys.argv[8])
+minES = sys.argv[7]
+minSubCount = sys.argv[8]
+batchSize = int(sys.argv[9])
 
 # Parameters: Dataset
 labelsXAxis = [f'R{i}' for i in range(1, lenSubs+1)]
 enzyme = None
 if enzymeName.lower() == 'mpro2':
     enzyme = f'SARS-CoV-2 M{'ᵖʳᵒ'}'
-tagFile = f'{enzyme} - {fixAA}@R{fixPos}'
+tagFile = f'{fixAA}@R{fixPos}'
 fileName = None
 if useReadingFrame:
-    fileName = f'fixedMotifSubs - {tagFile} - FinalSort - MinCounts {minSubs}'
+    datasetTag = f'Reading Frame {tagFile}'
+    fileName = f'fixedMotifSubs - {enzyme} - {tagFile} - FinalSort - MinCounts {minSubCount}'
 else:
-    fileName = f'fixedSubs - {tagFile} - FinalSort - MinCounts {minSubs}'
+    datasetTag = f'Filtered {tagFile}'
+    fileName = f'fixedSubs - {enzyme} - {tagFile} - FinalSort - MinCounts {minSubCount}'
 
 
 print(f'Generate Embeddings:\n'
       f'    ESM: {modelParams}\n'
       f'    Enzyme: {enzymeName}\n'
-      f'    Min Subs: {minSubs}\n\n')
+      f'    Min Subs: {minSubCount}\n\n')
 
 # Define: Directories
 pathData = os.path.join('Data')
@@ -49,22 +53,41 @@ pathEmbeddings = os.path.join('Embeddings')
 os.makedirs(pathData, exist_ok=True)
 os.makedirs(pathEmbeddings, exist_ok=True)
 
+
 # Load data
-def loadSubs(file):
+def loadSubs(file, tag):
     print('================================= Loading Data '
           '==================================')
-    pathSubs = os.path.join(pathData, fileName)
-    print(f'Loading Substrates:\n'
+    pathSubs = os.path.join(pathData, file)
+    print(f'Loading Substrates: {tag}\n'
           f'     {pathSubs}\n\n')
-    return pathSubs
-substrates = loadSubs(file=fileName)
+    with open(pathSubs, 'rb') as openedFile:  # Open file
+        loadedSubs = pk.load(openedFile)  # Access the data
+        totalSubs = sum(loadedSubs.values())
+
+        print(f'Total Substrates: {totalSubs:,}\n\n')
+    
+    return loadedSubs, totalSubs
+
+# Load: Substrates
+subsTrain, subsTrainN = loadSubs(file=fileName, tag='Training Data')
+subsPred, subsPredN = loadSubs(file=fileName, tag='Prediction Data')
+
+# Generate: Random Subs
+subsPred = ['AVLQSASA', 'TSLQGVFA', 'VILQGGTA']
+subsPredN = len(subsPred)
 
 
-substrates = {
-    'AVLQSASA': 125544,
-    'TSLQGVFA': 119235,
-    'VILQGGTA': 110987,
-}
+sys.exit()
+# Files: ESM
+tagEmbeddingsTrain = (
+    f'Embeddings - ESM {modelParams} - {enzyme} - {datasetTag} - '
+    f'MinCounts {minSubCount} - N {subsTrainN} - '
+    f'{len(labelsXAxis)} AA - Batch {batchSize}')
+tagEmbeddingsPred = (
+    f'Embeddings - ESM {modelParams} - {enzymeName} - Predictions - '
+    f'Min ES {minES} - MinCounts {minSubCount} - N {subsPredN} - '
+    f'{len(labelsXAxis)} AA - Batch {batchSize}')
 
 
 
@@ -84,7 +107,7 @@ else:
 
 
 
-def ESM(substrates, paramsESM, pathSave, trainingSet=False):
+def ESM(substrates, paramsESM, tagEmbeddiongs, pathSave, trainingSet=False):
     print('=========================== Generate Embeddings: ESM '
           '============================')
     # Inspect: Data type
@@ -95,7 +118,7 @@ def ESM(substrates, paramsESM, pathSave, trainingSet=False):
           f'Batch Size: {batchSize}\n')
 
     # Load: ESM Embeddings
-    pathEmbeddings = os.path.join(pathSave, f'{paramsESM}.csv')
+    pathEmbeddings = os.path.join(pathSave, f'{tagEmbeddiongs}.csv')
 
     # # Generate Embeddings
     # Step 1: Convert substrates to ESM model format and generate Embeddings
@@ -120,16 +143,16 @@ def ESM(substrates, paramsESM, pathSave, trainingSet=False):
 
     # Step 2: Load the ESM model and batch converter
     if paramsESM == '15B Params':
-        print(f'Loading Model: esm2_t48_15B_UR50D()')
-        model, alphabet = esm.pretrained.esm2_t48_15B_UR50D()
-        numLayersESM = 48
-    else:
-        # print(f'Loading Model: esm2_t36_3B_UR50D()')
-        # model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
-        # numLayersESM = 36
+        # print(f'Loading Model: esm2_t48_15B_UR50D()')
+        # model, alphabet = esm.pretrained.esm2_t48_15B_UR50D()
+        # numLayersESM = 48
         print(f'Loading Model: esm2_t33_650M_UR50D')
         model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
         numLayersESM = 33
+    else:
+        print(f'Loading Model: esm2_t36_3B_UR50D()')
+        model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
+        numLayersESM = 36
     print()
     model = model.to(device)
 
@@ -225,8 +248,8 @@ def ESM(substrates, paramsESM, pathSave, trainingSet=False):
     subEmbeddings.to_csv(pathEmbeddings)
 
 
-
 # Generate embeddings
-ESM(substrates=substrates, paramsESM=modelParams, pathSave=pathEmbeddings,
-    trainingSet=True)
-# ESM(substrates=substrates, paramsESM=modelParams, pathSave=pathEmbeddings)
+ESM(substrates=subsTrain, paramsESM=modelParams, pathSave=pathEmbeddings,
+    tagEmbeddiongs=tagEmbeddingsTrain, trainingSet=True)
+ESM(substrates=subsPred, paramsESM=modelParams, pathSave=pathEmbeddings,
+    tagEmbeddiongs=tagEmbeddingsPred)
