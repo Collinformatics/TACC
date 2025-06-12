@@ -202,7 +202,7 @@ def ESM(substrates, paramsESM, tagEmbeddiongs, pathSave, trainingSet=False):
             del tokenReps, batch
             torch.cuda.empty_cache()
     end = time.time()
-    runtime = end - start
+    runtime = (end - start) / 60
     print(f'ESM Runtime: {round(runtime, 3):,} s\n\n')
 
 
