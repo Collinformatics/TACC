@@ -27,6 +27,14 @@ while getopts "cdu:" opt; do
   esac
 done
 
+# Check for required flag
+if [[ -z "$userName" ]]; then
+  echo "ERROR: -u <username> is required"
+  echo "Usage: $0 -u <username> [-c] [-d]"
+  exit 1
+fi
+
+
 # Display login info
 echo "Computer: $inComputer"
 echo -e "Username: $userName\n"
@@ -42,6 +50,15 @@ fi
 }
 login
 
+# Verify if login was successful
+dir="$(pwd)"
+
+if [[ ! "$dir" == *"$userName"* ]]; then
+  echo "ERROR: Your user name '$userName' is not part of the wd."
+  echo "Dir: $dir"
+  exit 1
+fi
+
 
 # Move to the working directory
 cd \$WORK &&
@@ -56,7 +73,7 @@ fi
 
 # Move to project directory
 # shellcheck disable=SC2164
-cd "$inDirectory"
+cd "$inDirectory" 
 
 
 # Inspect: Virtual Environment
@@ -83,3 +100,5 @@ if [[ ! -d "venv" ]]; then
   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
   pip install xgboost
 fi
+
+
