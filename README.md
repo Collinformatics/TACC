@@ -62,6 +62,15 @@ Move the the WORK directory
 
     cd /work/file/username
 
+- Tip: use pwd to find your wd
+
+      pwd
+      /home1/04125/username
+
+  - Now replace "home1" with "word" and change directories with:
+
+        cd /work/04125/username
+
 Activate the venv: (if you have created it)
 
     source venv/bin/activate
