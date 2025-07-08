@@ -67,7 +67,7 @@ Move the the WORK directory
       pwd
       /home1/04125/username
 
-  - Now replace "home1" with "word" and change directories with:
+  - Now replace "home1" with "work" and change directories with:
 
         cd /work/04125/username
 
