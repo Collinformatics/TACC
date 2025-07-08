@@ -29,4 +29,12 @@ Login by with the command:
   
         bash loginTACC.sh -u username -d
 
-   
+# Using TACC:
+
+Run a job with sbatch:
+
+    sbatch ESM/runESM.sh
+
+View your jobs:
+
+    squeue -u <username>
