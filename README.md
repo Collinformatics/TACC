@@ -82,3 +82,9 @@ Run a job with sbatch:
 View your jobs:
 
     squeue -u <username>
+
+Inspect the error logs:
+
+    file runESM*err
+
+
