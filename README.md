@@ -35,15 +35,19 @@ Login by with the command:
 
       python -m venv <venvName>
 
-- Update pip:
+  - I'm going to name my environment as: venvESM
 
-      python -m pip install --upgrade pip
+        python -m venv venvESM
 
 # Install Modules:
 
-- First you need to activate the venv:
+- Before you install anything, you need to activate the venv:
 
       source venvESM/bin/activate
+
+- Its is recommended that you update pip:
+
+      python -m pip install --upgrade pip
 
 - Next, you can install the modules:
   
