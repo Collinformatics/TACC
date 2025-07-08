@@ -66,7 +66,7 @@ export CACHE_DIR=/work/07687/collin25/.cache
 export PYTHON_EGG_CACHE=/work/07687/collin25/.python-eggs
 
 # Retrieve the requested time limit
-requested_time=$(scontrol show job $SLURM_JOB_ID | awk -F= '/TimeLimit/ {print $2}' | awk '{print $$
+requested_time=$(scontrol show job $SLURM_JOB_ID | awk -F= '/TimeLimit/ {print $2}' | awk '{print $1}')
 
 
 # Log the start time
