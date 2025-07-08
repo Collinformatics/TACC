@@ -31,6 +31,10 @@ Login by with the command:
 
 # Using TACC:
 
+Move the the WORK directory
+
+    cd /work/file/username
+
 Activate the venv: (if you have created it)
 
     source venv/bin/activate
