@@ -31,6 +31,10 @@ Login by with the command:
 
 # Using TACC:
 
+Activate the venv: (if you have created it)
+
+    source venv/bin/activate
+
 Run a job with sbatch:
 
     sbatch ESM/runESM.sh
