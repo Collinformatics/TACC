@@ -40,10 +40,16 @@ Login by with the command:
       python -m pip install --upgrade pip
 
 # Install Modules:
+
+- First you need to activate the venv:
+
+      source venvESM/bin/activate
+
+- Next, you can install the modules:
   
-        pip install fair-esm
-        pip install pandas
-        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+      pip install fair-esm
+      pip install pandas
+      pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 
 # Using TACC:
