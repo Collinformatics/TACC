@@ -29,6 +29,23 @@ Login by with the command:
   
         bash loginTACC.sh -u username -d
 
+# Setting Up A Virtual Environment:
+
+- Create venv:
+
+      python -m venv <venvName>
+
+- Update pip:
+
+      python -m pip install --upgrade pip
+
+# Install Modules:
+  
+        pip install fair-esm
+        pip install pandas
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+
 # Using TACC:
 
 Move the the WORK directory
