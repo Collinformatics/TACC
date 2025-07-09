@@ -64,7 +64,7 @@ Move the the WORK directory
 
 - Tip: use pwd to find your wd
 
-      pwd
+      $ pwd
       /home1/04125/username
 
   - Now replace "home1" with "work" and change directories with:
