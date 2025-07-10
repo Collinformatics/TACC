@@ -19,7 +19,7 @@
 
 inModelType='15B Params'
 inEnzymeName='Mpro2'
-inLayerESM=
+inLayerESM=20
 inSubstrateLength=8
 inUseReadingFrame=true
 inMinSubs=100 # 5000, 1000, 100, 10
