@@ -13,17 +13,15 @@ modelParams = sys.argv[1]
 enzymeName = sys.argv[2]
 fixAA = sys.argv[3]
 fixPos = sys.argv[4]
-lenSubs = int(sys.argv[5])
-useReadingFrame = sys.argv[6]
-minES = sys.argv[7]
-minSubCount = sys.argv[8]
-batchSize = int(sys.argv[9])
-layerESM = int(sys.argv[10])
-loadPredSubs = sys.argv[11].lower() == 'true'
+useReadingFrame = sys.argv[5]
+minES = sys.argv[6]
+minSubCount = sys.argv[7]
+batchSize = int(sys.argv[8])
+layerESM = int(sys.argv[9])
+loadPredSubs = sys.argv[10].lower() == 'true'
 scoreType = 'Counts'
 
 # Parameters: Dataset
-labelsXAxis = [f'R{i}' for i in range(1, lenSubs+1)]
 enzyme = None
 if enzymeName.lower() == 'mpro2':
     enzyme = 'SARS-CoV-2 Mᵖʳᵒ'
@@ -238,34 +236,36 @@ def ESM(substrates, sizeESM, tagEmbeddiongs, pathSave, trainingSet=False):
 
 
 # ===================================== Run The Code =====================================
-layersESMTag = f'ESM L{layerESM}'.replace(', ', ',')
 if loadPredSubs:
     # Load: Substrates
-    subsPred, subsPredN = loadSubs(file=fileNamePredSubs, tag='Prediction Data',
-                                   loadPredictedSubs=True)
+    subs, subsPredN = loadSubs(file=fileNamePredSubs, tag='Prediction Data',
+                               loadPredictedSubs=True)
+
+    # Substrate parameters
+    lenSubs = subs[0]
+    labelsXAxis = [f'R{i}' for i in range(1, lenSubs + 1)]
 
     # Define: File tag
-    tagEmbeddingsPred = (
+    tagEmbeddings = (
         f'Embeddings - ESM L{layerESM} {modelParams} - Batch '
         f'{batchSize} - {enzymeName} -  Predictions - '
         f'Min ES {minES} - {scoreType} - MinCounts {minSubCount} - '
         f'N {subsPredN} - {lenSubs} AA')
-
-    # Generate embeddings
-    ESM(substrates=subsPred, sizeESM=modelParams, pathSave=pathEmbeddings,
-        tagEmbeddiongs=tagEmbeddingsPred)
 else:
     # Load: Substrates
-    subsTrain, subsTrainN = loadSubs(file=fileName, tag='Training Data')
+    subs, subsTrainN = loadSubs(file=fileName, tag='Training Data')
+
+    # Substrate parameters
+    lenSubs = len(next(iter(subs)))
+    labelsXAxis = [f'R{i}' for i in range(1, lenSubs + 1)]
 
     # Define: File tag
-    tagEmbeddingsTrain = (
-        f'Embeddings - {layersESMTag} {modelParams} - Batch '
+    tagEmbeddings = (
+        f'Embeddings - ESM L{layerESM} {modelParams} - Batch '
         f'{batchSize} - {enzymeName} - {datasetTag} - {scoreType} - '
         f'MinCounts {minSubCount} - N {subsTrainN} - '
         f'{lenSubs} AA')
 
-    # Generate embeddings
-    ESM(substrates=subsTrain, sizeESM=modelParams, pathSave=pathEmbeddings,
-        tagEmbeddiongs=tagEmbeddingsTrain, trainingSet=True)
-
+# Generate embeddings
+ESM(substrates=subs, sizeESM=modelParams, pathSave=pathEmbeddings,
+    tagEmbeddiongs=tagEmbeddings, trainingSet=True)

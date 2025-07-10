@@ -16,19 +16,19 @@
 # | `esm2_t36_3B`   | 3B        | 2 – 8                  | Needs \~20–40 GB GPU                          |
 # | `esm2_t48_15B`  | 15B       | 1 – 2                  | Needs \~80–100 GB GPU (e.g., A100 80GB, H100) |
 
-#
+# Input 1: Job Parameters
 inModelType='15B Params'
-inEnzymeName='Mpro2'
 inLayerESM=20
-inSubstrateLength=8
+inBatchSize=2
+
+# Input 2: Dataset Parameters
+inEnzymeName='Mpro2'
+inFixedAA="Q"
+inFixedPos="4"
 inUseReadingFrame=true
 inMinSubs=100 # 5000, 1000, 100, 10
 inMinES=0
-inBatchSize=2
-
-AA="Q"
-pos="4"
-fileNameSubsPred=false
+inLoadSubsForPredictions=false
 
 # Get inputs
 while getopts "l:m:ps" opt; do
@@ -40,7 +40,7 @@ while getopts "l:m:ps" opt; do
       inMinSubs="$OPTARG"
       ;;
     p)
-      fileNameSubsPred=true
+      inLoadSubsForPredictions=true
       ;;
     s)
       inModelType='3B Params'
@@ -89,10 +89,9 @@ echo -e "Batch Size: $inBatchSize\n"
 
 # ===============================================================================
 # Run your Python script
-python ESM/ESM.py "$inModelType" "$inEnzymeName" "$AA" "$pos" "$inSubstrateLength" \
-              "$inUseReadingFrame" $inMinES "$inMinSubs" "$inBatchSize" "$inLayerESM" \
-              "$fileNameSubsPred"
-
+python ESM/ESM.py "$inModelType" "$inEnzymeName" "$inFixedAA" "$inFixedPos" \
+              "$inSubstrateLength" "$inMinES "$inMinSubs" "$inBatchSize" \
+              "$inLayerESM" "$inLoadSubsForPredictions"
 
 # Log the end time
 end_time=$(date +%s)
