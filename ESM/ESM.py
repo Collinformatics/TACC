@@ -18,7 +18,9 @@ useReadingFrame = sys.argv[6]
 minES = sys.argv[7]
 minSubCount = sys.argv[8]
 batchSize = int(sys.argv[9])
-loadPredSubs = sys.argv[10].lower() == 'true'
+layerESM = int(sys.argv[10])
+loadPredSubs = sys.argv[11].lower() == 'true'
+scoreType = 'Counts'
 
 # Parameters: Dataset
 labelsXAxis = [f'R{i}' for i in range(1, lenSubs+1)]
@@ -29,10 +31,12 @@ tagFile = f'{fixAA}@R{fixPos}'
 fileName = None
 if useReadingFrame:
     datasetTag = f'Reading Frame {tagFile}'
-    fileName = f'fixedMotifSubs - {enzyme} - {tagFile} - FinalSort - MinCounts {minSubCount}'
+    fileName = (f'fixedMotifSubs - {enzyme} - {tagFile} - '
+                f'FinalSort - MinCounts {minSubCount}')
 else:
     datasetTag = f'Filtered {tagFile}'
-    fileName = f'fixedSubs - {enzyme} - {tagFile} - FinalSort - MinCounts {minSubCount}'
+    fileName = (f'fixedSubs - {enzyme} - {tagFile} - '
+                f'FinalSort - MinCounts {minSubCount}')
 if loadPredSubs == 'true':
     loadPredSubs = False if loadPredSubs.lower() == 'false' else loadPredSubs
 print(f'Generate Embeddings:\n'
@@ -102,18 +106,20 @@ def loadSubs(file, tag, loadPredictedSubs=False):
 
 
 
-def ESM(substrates, paramsESM, tagEmbeddiongs, pathSave, trainingSet=False):
+def ESM(substrates, sizeESM, tagEmbeddiongs, pathSave, trainingSet=False):
     print('=========================== Generate Embeddings: ESM '
           '============================')
     # Inspect: Data type
     predictions = True
     if trainingSet:
         predictions = False
-    print(f'ESM Model: {paramsESM}\n'
+    print(f'ESM Model: {sizeESM}\n'
           f'Batch Size: {batchSize}\n')
 
     # Load: ESM Embeddings
     pathEmbeddings = os.path.join(pathSave, f'{tagEmbeddiongs}.csv')
+    print(f'Tag:\n{tagEmbeddiongs}\n\nPath:\n{pathEmbeddings}\n\n')
+    sys.exit()
 
     # # Generate Embeddings
     # Step 1: Convert substrates to ESM model format and generate Embeddings
@@ -137,21 +143,30 @@ def ESM(substrates, paramsESM, tagEmbeddiongs, pathSave, trainingSet=False):
     print()
 
 
-    # Step 2: Load the ESM model and batch converter
-    if paramsESM == '15B Params':
-        print(f'Loading Model: esm2_t48_15B_UR50D()\n')
+    # # Step 2: Load the ESM model and batch converter
+    if sizeESM == '15B Params':
         model, alphabet = esm.pretrained.esm2_t48_15B_UR50D()
-        numLayersESM = 48
-    else:
-        print(f'Loading Model: esm2_t36_3B_UR50D()\n')
+        layersESMMax = 48
+    elif sizeESM == '3B Params':
         model, alphabet = esm.pretrained.esm2_t36_3B_UR50D()
-        numLayersESM = 36
-    # print(f'Loading Model: esm2_t33_650M_UR50D\n')
-    # model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
-    # numLayersESM = 33
+        layersESMMax = 36
+    else:
+        model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
+        layersESMMax = 33
+        # esm2_t36_3B_UR50D has 36 layers
+        # esm2_t33_650M_UR50D has 33 layers
+        # esm2_t12_35M_UR50D has 12 layers
     model = model.to(device)
 
-    # Get: batch tensor
+    # End function
+    if layerESM > layersESMMax:
+        print(f'ERROR: The selected ESM layer ({layerESM}) is to large for the selected '
+              f'model.\n'
+              f'     Model Size: {sizeESM}\n'
+              f'     Max Layers: {layersESMMax}\n\n')
+        return None
+
+    # Get: Batch tensor
     batchConverter = alphabet.get_batch_converter()
 
 
@@ -164,7 +179,7 @@ def ESM(substrates, paramsESM, tagEmbeddiongs, pathSave, trainingSet=False):
     except Exception as exc:
         print(f'ERROR: The ESM has failed to evaluate your substrates\n\n'
               f'Exception:\n{exc}\n\n'
-              f'\n\nSuggestion:'
+              f'Suggestion:'
               f'     Try adding more memory:\n'
               f'          #SBATCH --mem=[80G, 100G, 120G, 140G]\n\n')
         sys.exit(1)
@@ -189,11 +204,10 @@ def ESM(substrates, paramsESM, tagEmbeddiongs, pathSave, trainingSet=False):
         for i in range(0, len(batchTokens), batchSize):
             start = time.time()
             batch = batchTokens[i:i + batchSize].to(device)
-            result = model(batch, repr_layers=[numLayersESM], return_contacts=False)
-            tokenReps = result["representations"][numLayersESM]
+            result = model(batch, repr_layers=[layerESM], return_contacts=False)
+            tokenReps = result["representations"][layerESM]
             seqEmbed = tokenReps[:, 0, :].cpu().numpy()
             allEmbeddings.append(seqEmbed)
-            end = time.time()
             if trainingSet:
                 allValues.extend(values[i:i + batchSize])
 
@@ -224,6 +238,7 @@ def ESM(substrates, paramsESM, tagEmbeddiongs, pathSave, trainingSet=False):
 
 
 # ===================================== Run The Code =====================================
+layersESMTag = f'ESM L{layerESM}'.replace(', ', ',')
 if loadPredSubs:
     # Load: Substrates
     subsPred, subsPredN = loadSubs(file=fileNamePredSubs, tag='Prediction Data',
@@ -231,12 +246,13 @@ if loadPredSubs:
 
     # Define: File tag
     tagEmbeddingsPred = (
-        f'Embeddings - ESM {modelParams} - {enzymeName} - Predictions - '
-        f'Min ES {minES} - MinCounts {minSubCount} - N {subsPredN} - '
-        f'{len(labelsXAxis)} AA - Batch {batchSize}')
+        f'Embeddings - ESM L{layerESM} {modelParams} - Batch '
+        f'{batchSize} - {enzymeName} -  Predictions - '
+        f'Min ES {minES} - {scoreType} - MinCounts {minSubCount} - '
+        f'N {subsPredN} - {lenSubs} AA')
 
     # Generate embeddings
-    ESM(substrates=subsPred, paramsESM=modelParams, pathSave=pathEmbeddings,
+    ESM(substrates=subsPred, sizeESM=modelParams, pathSave=pathEmbeddings,
         tagEmbeddiongs=tagEmbeddingsPred)
 else:
     # Load: Substrates
@@ -244,11 +260,12 @@ else:
 
     # Define: File tag
     tagEmbeddingsTrain = (
-        f'Embeddings - ESM {modelParams} - {enzymeName} - {datasetTag} - '
+        f'Embeddings - {layersESMTag} {modelParams} - Batch '
+        f'{batchSize} - {enzymeName} - {datasetTag} - {scoreType} - '
         f'MinCounts {minSubCount} - N {subsTrainN} - '
-        f'{len(labelsXAxis)} AA - Batch {batchSize}')
+        f'{lenSubs} AA')
 
     # Generate embeddings
-    ESM(substrates=subsTrain, paramsESM=modelParams, pathSave=pathEmbeddings,
+    ESM(substrates=subsTrain, sizeESM=modelParams, pathSave=pathEmbeddings,
         tagEmbeddiongs=tagEmbeddingsTrain, trainingSet=True)
 

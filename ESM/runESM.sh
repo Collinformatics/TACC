@@ -19,6 +19,7 @@
 
 inModelType='15B Params'
 inEnzymeName='Mpro2'
+inLayerESM=
 inSubstrateLength=8
 inUseReadingFrame=true
 inMinSubs=100 # 5000, 1000, 100, 10
@@ -30,8 +31,11 @@ pos="4"
 fileNameSubsPred=false
 
 # Get inputs
-while getopts "m:ps" opt; do
+while getopts "l:m:ps" opt; do
   case $opt in
+    l)
+      inLayerESM=$OPTARG
+      ;;
     m)
       inMinSubs="$OPTARG"
       ;;
@@ -63,6 +67,8 @@ if [ -z "$SLURM_JOB_ID" ]; then
   echo "Error: SLURM_JOB_ID is not set."
   exit 1
 fi
+
+# Set runtime limit
 runtimeLimit=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/TimeLimit/ {print $2}' | awk '{print $1}')
 
 
@@ -74,6 +80,7 @@ echo -e "\nJob Name: $SLURM_JOB_NAME"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Enzyme: $inEnzymeName"
 echo "Minimum Substrate Count: $inMinSubs"
+echo "ESM Layer: $inLayerESM"
 echo "Total Nodes: $(scontrol show hostnames $SLURM_JOB_NODELIST | wc -l)"
 echo "Node List: $SLURM_JOB_NODELIST"
 echo "Partition: $SLURM_JOB_PARTITION"
@@ -83,7 +90,8 @@ echo -e "Batch Size: $inBatchSize\n"
 # ===============================================================================
 # Run your Python script
 python ESM/ESM.py "$inModelType" "$inEnzymeName" "$AA" "$pos" "$inSubstrateLength" \
-              "$inUseReadingFrame" $inMinES "$inMinSubs" "$inBatchSize" "$fileNameSubsPred"
+              "$inUseReadingFrame" $inMinES "$inMinSubs" "$inBatchSize" "$inLayerESM" \
+              "$fileNameSubsPred"
 
 
 # Log the end time
