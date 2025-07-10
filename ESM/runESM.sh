@@ -16,7 +16,7 @@
 # | `esm2_t36_3B`   | 3B        | 2 – 8                  | Needs \~20–40 GB GPU                          |
 # | `esm2_t48_15B`  | 15B       | 1 – 2                  | Needs \~80–100 GB GPU (e.g., A100 80GB, H100) |
 
-
+#
 inModelType='15B Params'
 inEnzymeName='Mpro2'
 inLayerESM=20
@@ -62,7 +62,7 @@ export TEMP="$baseDir/tmp"
 export CACHE_DIR="$baseDir/.cache"
 export PYTHON_EGG_CACHE="$baseDir/.python-eggs"
 
-# Retrieve the requested time limit
+## Retrieve the requested time limit
 if [ -z "$SLURM_JOB_ID" ]; then
   echo "Error: SLURM_JOB_ID is not set."
   exit 1
@@ -70,7 +70,6 @@ fi
 
 # Set runtime limit
 runtimeLimit=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/TimeLimit/ {print $2}' | awk '{print $1}')
-
 
 # Log the start time
 start_time=$(date +%s)
@@ -80,6 +79,7 @@ echo -e "\nJob Name: $SLURM_JOB_NAME"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Enzyme: $inEnzymeName"
 echo "Minimum Substrate Count: $inMinSubs"
+echo "ESM Model: $inModelType"
 echo "ESM Layer: $inLayerESM"
 echo "Total Nodes: $(scontrol show hostnames $SLURM_JOB_NODELIST | wc -l)"
 echo "Node List: $SLURM_JOB_NODELIST"
