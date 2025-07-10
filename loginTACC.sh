@@ -44,6 +44,7 @@ echo -e "Username: $userName\n"
 login () {
 if [[ $inComputer == "vista" ]]; then
   ssh -l "$userName" login1.vista.tacc.utexas.edu
+  exit
 else
   ssh -l "$userName" login1.ls6.tacc.utexas.edu
 fi
