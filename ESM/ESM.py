@@ -24,7 +24,7 @@ loadPredSubs = sys.argv[10].lower() == 'true'
 labelsXAxis = [f'R{i}' for i in range(1, lenSubs+1)]
 enzyme = None
 if enzymeName.lower() == 'mpro2':
-    enzyme = f'SARS-CoV-2 M{'ᵖʳᵒ'}'
+    enzyme = 'SARS-CoV-2 Mᵖʳᵒ'
 tagFile = f'{fixAA}@R{fixPos}'
 fileName = None
 if useReadingFrame:
@@ -39,7 +39,6 @@ print(f'Generate Embeddings:\n'
       f'    ESM: {modelParams}\n'
       f'    Enzyme: {enzymeName}\n'
       f'    Min Subs: {minSubCount}\n\n')
-
 
 # Get: Predicted substrate file name
 if loadPredSubs:
@@ -57,8 +56,8 @@ if loadPredSubs:
 
 
 # Define: Directories
-pathData = os.path.join('../Data')
-pathEmbeddings = os.path.join('../Bash/Embeddings')
+pathData = os.path.join('ESM/Data')
+pathEmbeddings = os.path.join('ESM/Embeddings')
 os.makedirs(pathData, exist_ok=True)
 os.makedirs(pathEmbeddings, exist_ok=True)
 
@@ -205,7 +204,6 @@ def ESM(substrates, paramsESM, tagEmbeddiongs, pathSave, trainingSet=False):
     runtime = (end - start) / 60
     print(f'ESM Runtime: {round(runtime, 3):,} s\n\n')
 
-
     # Step 4: Extract Per-Sequence Embeddings
     embeddings = np.vstack(allEmbeddings) # Convert to numpy
     if predictions:
@@ -246,7 +244,7 @@ else:
 
     # Define: File tag
     tagEmbeddingsTrain = (
-        f'Embeddings - ESM {modelParams} - {enzyme} - {datasetTag} - '
+        f'Embeddings - ESM {modelParams} - {enzymeName} - {datasetTag} - '
         f'MinCounts {minSubCount} - N {subsTrainN} - '
         f'{len(labelsXAxis)} AA - Batch {batchSize}')
 

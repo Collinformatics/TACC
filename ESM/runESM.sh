@@ -3,12 +3,10 @@
 #SBATCH --job-name=ESM
 #SBATCH --output=runESM_%j.log
 #SBATCH --error=runESM_%j.err
-#SBATCH --time=00:30:00            # Set maximum runtime
-#SBATCH --cpus-per-task=4          # Number of CPUs for the task
-#SBATCH --nodes=1                  # Request nodes
-#SBATCH --ntasks-per-node=1        # Number of tasks per node (usually 1 per node)
-#SBATCH --partition=gpu-h200       # GPU partition
-#SBATCH --mem=128G                 # Memory {15B: 128G, 3B: 80G}
+#SBATCH --time=04:00:00            # Set maximum runtime
+#SBATCH -N 2                       # Request nodes
+#SBATCH -n 10                      # Number of tasks per node (usually 1 per node)
+#SBATCH -p gh                      # GPU partition
 
 
 # | **ESM Model**   | **Param** | **Common Batch Sizes** | **Notes**                                     |
@@ -25,7 +23,8 @@ inSubstrateLength=8
 inUseReadingFrame=true
 inMinSubs=100 # 5000, 1000, 100, 10
 inMinES=0
-batchSize=2
+inBatchSize=2
+
 AA="Q"
 pos="4"
 fileNameSubsPred=false
@@ -50,23 +49,21 @@ done
 
 
 # ===============================================================================
+baseDir=$(pwd)
 
-# Redirect temporary files and cache to /work
-export TORCH_HOME=/work/07687/collin25/.cache/hub
-export TMPDIR=/work/07687/collin25/tmp
-export TEMP=/work/07687/collin25/tmp
-export CACHE_DIR=/work/07687/collin25/.cache
-export PYTHON_EGG_CACHE=/work/07687/collin25/.python-eggs
-
-# Redirect temporary files and cache to /work
-export TORCH_HOME=/work/07687/collin25/.cache/hub
-export TMPDIR=/work/07687/collin25/tmp
-export TEMP=/work/07687/collin25/tmp
-export CACHE_DIR=/work/07687/collin25/.cache
-export PYTHON_EGG_CACHE=/work/07687/collin25/.python-eggs
+# Redirect temporary files and cache to work dir
+export TORCH_HOME="$baseDir/.cache/hub"
+export TMPDIR="$baseDir/tmp"
+export TEMP="$baseDir/tmp"
+export CACHE_DIR="$baseDir/.cache"
+export PYTHON_EGG_CACHE="$baseDir/.python-eggs"
 
 # Retrieve the requested time limit
-requested_time=$(scontrol show job $SLURM_JOB_ID | awk -F= '/TimeLimit/ {print $2}' | awk '{print $1}')
+if [ -z "$SLURM_JOB_ID" ]; then
+  echo "Error: SLURM_JOB_ID is not set."
+  exit 1
+fi
+runtimeLimit=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/TimeLimit/ {print $2}' | awk '{print $1}')
 
 
 # Log the start time
@@ -75,19 +72,18 @@ start_time=$(date +%s)
 # Log environment and settings
 echo -e "\nJob Name: $SLURM_JOB_NAME"
 echo "Job ID: $SLURM_JOB_ID"
-echo "Enzyme: $enzymeName"
+echo "Enzyme: $inEnzymeName"
+echo "Minimum Substrate Count: $inMinSubs"
 echo "Total Nodes: $(scontrol show hostnames $SLURM_JOB_NODELIST | wc -l)"
 echo "Node List: $SLURM_JOB_NODELIST"
-echo "CPUs per task: $SLURM_CPUS_PER_TASK"
-echo "Memory Allocation: ${SLURM_MEM_PER_NODE}"
 echo "Partition: $SLURM_JOB_PARTITION"
-echo -e "Batch Size: $batch\n"
+echo -e "Batch Size: $inBatchSize\n"
+
 
 # ===============================================================================
-
 # Run your Python script
-python ESM.py "$inModelType" "$inEnzymeName" "$AA" "$pos" "$inSubstrateLength" \
-              "$inUseReadingFrame" $inMinES "$inMinSubs" "$batchSize" "$fileNameSubsPred"
+python ESM/ESM.py "$inModelType" "$inEnzymeName" "$AA" "$pos" "$inSubstrateLength" \
+              "$inUseReadingFrame" $inMinES "$inMinSubs" "$inBatchSize" "$fileNameSubsPred"
 
 
 # Log the end time
@@ -95,5 +91,4 @@ end_time=$(date +%s)
 
 # Calculate and log the runtime
 runtime=$((end_time - start_time))
-echo -e "\nRequested Time: $requested_time"
 echo -e "   Total Runtime: $((runtime / 60)):$((runtime % 60))\n"
