@@ -36,8 +36,8 @@ fi
 
 
 # Display login info
-echo "Computer: $inComputer"
-echo -e "Username: $userName\n"
+echo "  Computer: $inComputer"
+echo -e "  Username: $userName\n"
 
 
 # Login:
