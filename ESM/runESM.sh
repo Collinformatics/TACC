@@ -5,7 +5,7 @@
 #SBATCH --error=runESM_%j.err
 #SBATCH --time=02:00:00            # Set maximum runtime
 #SBATCH -N 2                       # Request nodes
-#SBATCH -n 10                      # Number of tasks per node (usually 1 per node)
+#SBATCH -n 10                      # Number of tasks per node (num tasks = -n / -N)
 #SBATCH -p gh                      # GPU partition
 
 
