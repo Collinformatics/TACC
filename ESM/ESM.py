@@ -116,8 +116,7 @@ def ESM(substrates, sizeESM, tagEmbeddiongs, pathSave, trainingSet=False):
 
     # Load: ESM Embeddings
     pathEmbeddings = os.path.join(pathSave, f'{tagEmbeddiongs}.csv')
-    print(f'Tag:\n{tagEmbeddiongs}\n\nPath:\n{pathEmbeddings}\n\n')
-    sys.exit()
+    print(f'Tag:\n{tagEmbeddiongs}\n\nSave Path:\n{pathEmbeddings}\n\n')
 
     # # Generate Embeddings
     # Step 1: Convert substrates to ESM model format and generate Embeddings

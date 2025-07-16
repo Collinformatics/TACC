@@ -3,7 +3,7 @@
 #SBATCH --job-name=ESM
 #SBATCH --output=runESM_%j.log
 #SBATCH --error=runESM_%j.err
-#SBATCH --time=04:00:00            # Set maximum runtime
+#SBATCH --time=02:00:00            # Set maximum runtime
 #SBATCH -N 2                       # Request nodes
 #SBATCH -n 10                      # Number of tasks per node (usually 1 per node)
 #SBATCH -p gh                      # GPU partition
@@ -90,7 +90,7 @@ echo -e "Batch Size: $inBatchSize\n"
 # ===============================================================================
 # Run your Python script
 python ESM/ESM.py "$inModelType" "$inEnzymeName" "$inFixedAA" "$inFixedPos" \
-              "$inSubstrateLength" "$inMinES "$inMinSubs" "$inBatchSize" \
+              "$inUseReadingFrame" "$inMinES" "$inMinSubs" "$inBatchSize" \
               "$inLayerESM" "$inLoadSubsForPredictions"
 
 # Log the end time
