@@ -36,6 +36,7 @@ fi
 
 
 # Display login info
+echo -e "\nTACC Login:"
 echo "  Computer: $inComputer"
 echo -e "  Username: $userName\n"
 
@@ -62,8 +63,11 @@ fi
 
 
 # Move to the working directory
-cd \$WORK &&
-cd ..
+cd $WORK &&
+#cd ..
+
+echo "Login Dir:"
+pwd
 
 
 # Make the project directory if it doesn't exist
