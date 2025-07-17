@@ -98,4 +98,4 @@ end_time=$(date +%s)
 
 # Calculate and log the runtime
 runtime=$((end_time - start_time))
-echo -e "   Total Runtime: $((runtime / 60)):$((runtime % 60))\n"
+echo -e "   Total Runtime: $((runtime / 60)):$((runtime % 60)) min\n"
