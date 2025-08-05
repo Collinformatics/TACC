@@ -25,6 +25,8 @@ scoreType = 'Counts'
 enzyme = None
 if enzymeName.lower() == 'mpro2':
     enzyme = 'SARS-CoV-2 Mᵖʳᵒ'
+else:
+    enzyme = enzymeName
 tagFile = f'{fixAA}@R{fixPos}'
 fileName = None
 if useReadingFrame:
@@ -97,7 +99,7 @@ def loadSubs(file, tag, loadPredictedSubs=False):
         # Load pickled substrates as a dictionary
         with open(pathSubs, 'rb') as openedFile:  # Open file
             loadedSubs = pk.load(openedFile)  # Access the data
-            totalSubs = sum(loadedSubs.values())
+            totalSubs = len(loadedSubs.keys())
     print(f'Total Substrates: {totalSubs:,}\n\n')
 
     return loadedSubs, totalSubs
@@ -199,7 +201,6 @@ def ESM(substrates, sizeESM, tagEmbeddiongs, pathSave, trainingSet=False):
     start = time.time()
     with torch.no_grad():
         for i in range(0, len(batchTokens), batchSize):
-            start = time.time()
             batch = batchTokens[i:i + batchSize].to(device)
             result = model(batch, repr_layers=[layerESM], return_contacts=False)
             tokenReps = result["representations"][layerESM]
@@ -235,13 +236,16 @@ def ESM(substrates, sizeESM, tagEmbeddiongs, pathSave, trainingSet=False):
 
 
 # ===================================== Run The Code =====================================
+useTrainingData = True
 if loadPredSubs:
+    useTrainingData = False
+
     # Load: Substrates
     subs, subsPredN = loadSubs(file=fileNamePredSubs, tag='Prediction Data',
                                loadPredictedSubs=True)
 
     # Substrate parameters
-    lenSubs = subs[0]
+    lenSubs = len(subs[0])
     labelsXAxis = [f'R{i}' for i in range(1, lenSubs + 1)]
 
     # Define: File tag
@@ -267,4 +271,4 @@ else:
 
 # Generate embeddings
 ESM(substrates=subs, sizeESM=modelParams, pathSave=pathEmbeddings,
-    tagEmbeddiongs=tagEmbeddings, trainingSet=True)
+    tagEmbeddiongs=tagEmbeddings, trainingSet=useTrainingData)
