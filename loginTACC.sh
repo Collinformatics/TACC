@@ -30,7 +30,7 @@ done
 # Check for required flag
 if [[ -z "$userName" ]]; then
   echo "ERROR: -u <username> is required"
-  echo "Usage: $0 -u <username> [-c] [-d]"
+  echo -e "Usage: $0 -u <username> [-c] [-d]\n"
   exit 1
 fi
 
